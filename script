@@ -78,3 +78,8 @@ do
    ;;
  esac
 done
+
+if [ $# -eq 0 ]
+then
+ help
+fi
