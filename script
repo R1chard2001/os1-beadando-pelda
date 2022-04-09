@@ -1,0 +1,80 @@
+#!/bin/bash
+file=response.json
+
+file_check() {
+ if [ ! -f $file ]
+ then
+  echo "Nem létezik $file fájl."
+  echo "Használati útmutató kiírásához használja a következő parancsot:"
+  echo "$0 -h"
+  exit 1
+ fi
+}
+
+help() {
+cat << HELP
+A program használata:
+$0 [opciók]
+
+Opciók:
+ -h        Ez az üzenet megjelenítése.
+ -i        Saját IP adatok letöltése
+ -w        Az adatok kiíratása jq segítségével.
+ -f        Az IP cím és a hostname kiíratása.
+ -o <ip>   Adatok letöltése a megadott IP címről.
+HELP
+}
+
+ip_data() {
+ curl ipinfo.io -o $file -s
+ echo "Saját IP információk letöltve."
+}
+
+write_out() {
+ file_check
+ cat $file | jq
+}
+
+filter() {
+ file_check
+ ip=$(cat $file | jq .ip | tr -d "\"")
+ hostname=$(cat $file | jq .hostname | tr -d "\"")
+ echo "IP:       $ip"
+ echo "Hostname: $hostname"
+}
+
+other_ip_data() {
+ curl ipinfo.io/$1 -o $file -s
+ echo "Információk a(z) $1 IP címről letöltve."
+}
+
+while getopts :iwfo:h PARAM
+do
+ case $PARAM in
+  i)
+   ip_data
+   ;;
+  w)
+   write_out
+   ;;
+  f)
+   filter
+   ;;
+  o)
+   other_ip_data $OPTARG
+   ;;
+  h)
+   help
+   ;;
+  :)
+   echo "A(z) -$OPTARG vár értéket."
+   echo "Használati útmutató kiírásához használja a következő parancsot:"
+   echo "$0 -h"
+   ;;
+  *)
+   echo "Érvénytelen argumentum."
+   echo "Használati útmutató kiírásához használja a következő parancsot:"
+   echo "$0 -h"
+   ;;
+ esac
+done
